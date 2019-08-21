@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.urls import reverse
 from requests_oauthlib import OAuth2Session
 
@@ -29,18 +29,21 @@ requests_log.propagate = True
 
 def redirect_login(request):
     """
-        Redirecting users towards authentication Keycloak endpoint
-        and creating session for further validation
+        Redirecting users towards authentication Keycloak backend
+        and creating sessions for further validation.
     """
+
     client_id = settings.KEYCLOAK_CLIENT_ID
     base_authorize_url = settings.KEYCLOAK_AUTHORIZE_URL
     redirect_uri = request.build_absolute_uri(reverse('callback'))
     if 'next' in request.GET:
         redirect_uri += "?next=" + quote(request.GET['next'])
+
     oauth2_session = OAuth2Session(
         client_id, scope='openid email profile', redirect_uri=redirect_uri)
     authorization_url, state = oauth2_session.authorization_url(
         base_authorize_url)
+
     # Store state and redirect_uri in session for
     # later validation (see authentication.py)
     request.session['OAUTH2_STATE'] = state
@@ -49,7 +52,9 @@ def redirect_login(request):
 
 
 def callback(request):
-    """ enable redirect to /protected/ after successful login """
+    """
+        Enable redirect to /protected/ after successful login
+    """
     try:
         user = authenticate(request=request)
         login(request, user)
@@ -63,4 +68,9 @@ def callback(request):
 
 @login_required
 def protected(request):
+    """
+        Access to the protected resource is granted only after
+        successful verification of the user.
+
+    """
     return HttpResponse("Protected resource")

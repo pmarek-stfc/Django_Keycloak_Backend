@@ -1,6 +1,6 @@
 import json
 import logging
-import time
+import requests
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -13,16 +13,29 @@ class KeycloakBackend(object):
     """Integrating Django with Keycloak using OpenID Connect (OIDC)"""
 
     def authenticate(self, request=None):
+        """
+            Verifies a set of credentials. Checks them against each
+            authentication backend, and returns a User object if the
+            credentials are valid for a backend. If the credentials
+            aren’t valid for any backend or if a backend raises
+            an exception, it returns None
+
+        """
         try:
-            token, user_info = self._redirection(
-                 request)
-            self._handle_token(request, token)
-            return self._handle_userinfo(request, user_info)
+            token = self._redirection(request)
+            userinfo = self._handle_token(token)
+            return self._handle_userinfo(userinfo)
         except Exception as e:
             logger.exception("Something happened while logging in", exc_info=e)
             return None
 
     def get_user(self, user_id):
+        """
+            Returns the authenticated user object.
+            This method is only ever called after successful validation.
+
+        """
+
         try:
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:
@@ -30,71 +43,59 @@ class KeycloakBackend(object):
 
     def _redirection(self, request):
         """
-            The main access granting method.
-            Firstly, obtains Access Token and User info from Keycloak.
-            After the validation is done, return Token and User info
+            Gets a token from Keycloak backend and then returns it.
+
+        :param request:
+        :return: token
         """
+
         authorization_code_url = request.build_absolute_uri()
         client_id = settings.KEYCLOAK_CLIENT_ID
         client_secret = settings.KEYCLOAK_CLIENT_SECRET
         token_url = settings.KEYCLOAK_TOKEN_URL
-        user_info_url = settings.KEYCLOAK_USERINFO_URL
         state = request.session['OAUTH2_STATE']
         redirect_uri = request.session['OAUTH2_REDIRECT_URI']
+
         oauth2_session = OAuth2Session(client_id,
                                        scope='openid email profile',
                                        redirect_uri=redirect_uri,
                                        state=state)
-        token = oauth2_session.fetch_token(
-            token_url, client_secret=client_secret,
-            authorization_response=authorization_code_url)
-        user_info = oauth2_session.get(user_info_url).json()
-        return token, user_info
+        token = oauth2_session.fetch_token(token_url,
+                                           client_secret=client_secret,
+                                           authorization_response=authorization_code_url)
+        return token
 
 
-    def _handle_token(self, request, token):
+    def _handle_token(self, token):
         """
-            Put access_token into session to be used for
-            authenticating with API server
+            Sends an access token obtained in '_redirection' method to a custom resource server.
+            The resource server validates the token and sends appropriate response back
+            which is then handled.
+
+        :param token:
+        :return: username
         """
-        logger.debug(
-            "token: {}".format(
-                json.dumps(
-                    token,
-                    indent=True,
-                    sort_keys=True)))
-        now = time.time()
-        sess = request.session
-        sess['ACCESS_TOKEN'] = token['access_token']
-        sess['ACCESS_TOKEN_EXPIRES_AT'] = now + token['expires_in']
-        sess['REFRESH_TOKEN'] = token['refresh_token']
-        sess['REFRESH_TOKEN_EXPIRES_AT'] = now + token['refresh_expires_in']
 
+        token = token['access_token']
+        headers = {
+            'Authorization': 'Bearer {}'.format(token)
+        }
+        # Firstly, send token towards the resource server
+        # Secondly, extract headers from response sent by the server
+        response = requests.get('http://localhost:8001/verify', headers=headers).headers
 
-    def _handle_userinfo(self, request, userinfo):
-        logger.debug(
-            "userinfo: {}".format(
-                json.dumps(
-                    userinfo,
-                    indent=True,
-                    sort_keys=True)))
-        username = userinfo['preferred_username']
-        email = userinfo['email']
-        first_name = userinfo['given_name']
-        last_name = userinfo['family_name']
-        request.session['USERINFO'] = userinfo
-        try:
-            user = User.objects.get(username=username)
-            # Update these fields each time, in case they have changed
-            user.email = email
-            user.first_name = first_name
-            user.last_name = last_name
-            user.save()
-            return user
-        except User.DoesNotExist:
-            user = User(username=username,
-                        first_name=first_name,
-                        last_name=last_name,
-                        email=email)
-            user.save()
-            return user
+        convert_to_json = json.loads(response['user_info'])
+        username = convert_to_json['preferred_username']
+        return username
+
+    def _handle_userinfo(self, userinfo):
+        """
+            Returns user object which is then processed by 'get_user' method
+
+        :param userinfo:
+        :return: user
+        """
+
+        username = userinfo
+        user = User.objects.get(username=username)
+        return user
