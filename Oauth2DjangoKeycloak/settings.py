@@ -127,9 +127,9 @@ LOGIN_URL = 'login'
 # Keycloak settings
 KEYCLOAK_CLIENT_ID = 'test'
 KEYCLOAK_CLIENT_SECRET = '<PUT CLIENT SECRET HERE>'
-KEYCLOAK_AUTHORIZE_URL = 'http://localhost:9000/auth/realms/master/protocol/openid-connect/auth'
-KEYCLOAK_TOKEN_URL = 'http://localhost:9000/auth/realms/master/protocol/openid-connect/token'
-KEYCLOAK_USERINFO_URL = 'http://localhost:9000/auth/realms/master/protocol/openid-connect/userinfo'
+KEYCLOAK_AUTHORIZE_URL = 'http://localhost:8080/auth/realms/master/protocol/openid-connect/auth'
+KEYCLOAK_TOKEN_URL = 'http://localhost:8080/auth/realms/master/protocol/openid-connect/token'
+KEYCLOAK_USERINFO_URL = 'http://localhost:8080/auth/realms/master/protocol/openid-connect/userinfo'
 
 LOGGING = {
     'version': 1,
