@@ -97,5 +97,12 @@ class KeycloakBackend(object):
         """
 
         username = userinfo
-        user = User.objects.get(username=username)
-        return user
+        try:
+            user = User.objects.get(username=username)
+            # Update these fields each time, in case they have changed
+            user.save()
+            return user
+        except User.DoesNotExist:
+            user = User(username=username)
+            user.save()
+            return user
