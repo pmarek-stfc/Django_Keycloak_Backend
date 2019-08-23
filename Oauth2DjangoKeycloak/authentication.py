@@ -68,9 +68,9 @@ class KeycloakBackend(object):
 
     def _handle_token(self, token):
         """
-            Sends an access token obtained in '_redirection' method to a custom resource server.
-            The resource server validates the token and sends appropriate response back
-            which is then handled.
+            Sends an access token obtained in '_redirection' method to the resource server
+            django app. The resource server validates the token and sends appropriate 
+            response back which is then handled.
 
         :param token:
         :return: username
