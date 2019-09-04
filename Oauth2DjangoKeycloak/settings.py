@@ -129,6 +129,7 @@ KEYCLOAK_CLIENT_ID = 'test'
 KEYCLOAK_CLIENT_SECRET = '<PUT CLIENT SECRET HERE>'
 KEYCLOAK_AUTHORIZE_URL = 'http://localhost:8080/auth/realms/master/protocol/openid-connect/auth'
 KEYCLOAK_TOKEN_URL = 'http://localhost:8080/auth/realms/master/protocol/openid-connect/token'
+SSL_VERIFY = False
 
 LOGGING = {
     'version': 1,
