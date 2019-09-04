@@ -60,9 +60,15 @@ class KeycloakBackend(object):
                                        scope='openid email profile',
                                        redirect_uri=redirect_uri,
                                        state=state)
+        
+        verify = True
+        if hasattr(settings, 'SSL_VERIFY'):
+            verify = settings.SSL_VERIFY
+
         token = oauth2_session.fetch_token(token_url,
                                            client_secret=client_secret,
-                                           authorization_response=authorization_code_url)
+                                           authorization_response=authorization_code_url,
+                                           verify=verify)
         return token
 
 
