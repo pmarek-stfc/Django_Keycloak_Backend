@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'sslserver',
 ]
 
 MIDDLEWARE = [
@@ -126,10 +128,11 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_URL = 'login'
 # Keycloak settings
 KEYCLOAK_CLIENT_ID = 'test'
-KEYCLOAK_CLIENT_SECRET = '<PUT CLIENT SECRET HERE>'
-KEYCLOAK_AUTHORIZE_URL = 'http://localhost:8080/auth/realms/master/protocol/openid-connect/auth'
-KEYCLOAK_TOKEN_URL = 'http://localhost:8080/auth/realms/master/protocol/openid-connect/token'
+KEYCLOAK_CLIENT_SECRET = '16d48eb8-0e38-4e9a-95f2-f6fba2556380'
+KEYCLOAK_AUTHORIZE_URL = 'https://keycloak.ceda.ac.uk/auth/realms/master/protocol/openid-connect/auth'
+KEYCLOAK_TOKEN_URL = 'https://keycloak.ceda.ac.uk/auth/realms/master/protocol/openid-connect/token'
 SSL_VERIFY = False
+SECURE_SSL_REDIRECT = True
 
 LOGGING = {
     'version': 1,

@@ -38,6 +38,7 @@ def redirect_login(request):
     redirect_uri = request.build_absolute_uri(reverse('callback'))
     if 'next' in request.GET:
         redirect_uri += "?next=" + quote(request.GET['next'])
+    
 
     oauth2_session = OAuth2Session(
         client_id, scope='openid email profile', redirect_uri=redirect_uri)

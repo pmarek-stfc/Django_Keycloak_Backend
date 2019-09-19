@@ -8,9 +8,14 @@ from requests_oauthlib import OAuth2Session
 
 logger = logging.getLogger(__name__)
 
-
 class KeycloakBackend(object):
     """Integrating Django with Keycloak using OpenID Connect (OIDC)"""
+
+    def __init__(self):
+        self.verify = True
+        if hasattr(settings, 'SSL_VERIFY'):
+            self.verify = settings.SSL_VERIFY
+
 
     def authenticate(self, request=None):
         """
@@ -50,6 +55,7 @@ class KeycloakBackend(object):
         """
 
         authorization_code_url = request.build_absolute_uri()
+        print('-----', authorization_code_url)
         client_id = settings.KEYCLOAK_CLIENT_ID
         client_secret = settings.KEYCLOAK_CLIENT_SECRET
         token_url = settings.KEYCLOAK_TOKEN_URL
@@ -61,14 +67,12 @@ class KeycloakBackend(object):
                                        redirect_uri=redirect_uri,
                                        state=state)
         
-        verify = True
-        if hasattr(settings, 'SSL_VERIFY'):
-            verify = settings.SSL_VERIFY
 
         token = oauth2_session.fetch_token(token_url,
                                            client_secret=client_secret,
                                            authorization_response=authorization_code_url,
-                                           verify=verify)
+                                           verify=self.verify)
+        print('-----------', token)
         return token
 
 
@@ -88,7 +92,8 @@ class KeycloakBackend(object):
         }
         # Firstly, send token towards the resource server
         # Secondly, extract headers from response sent by the server
-        response = requests.get('http://localhost:8001/verify', headers=headers).headers
+
+        response = requests.get('https://localhost:8001/verify', headers=headers, verify=self.verify).headers
 
         convert_to_json = json.loads(response['user_info'])
         username = convert_to_json['preferred_username']
